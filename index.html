@@ -79,18 +79,32 @@
             height: 200px;
             background: #0a0a1a;
             border-radius: 15px;
-            overflow: hidden;
+            overflow: hidden; /* Hide overflow - items outside container */
             border: 3px solid #4a4a6a;
+            /* Add mask to show items smoothly scrolling through center */
+            -webkit-mask-image: linear-gradient(to bottom, 
+                transparent 0%, 
+                black 20%, 
+                black 80%, 
+                transparent 100%);
+            mask-image: linear-gradient(to bottom, 
+                transparent 0%, 
+                black 20%, 
+                black 80%, 
+                transparent 100%);
         }
 
         .drum {
             position: absolute;
             width: 100%;
-            height: 100%;
+            /* Height of all items combined: 30 items * 50px = 1500px */
+            height: 1500px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0s ease-out;
+            /* Start with drum positioned so first items are hidden */
+            transform: translateY(0);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
         }
 
         .drum-item {
@@ -348,12 +362,13 @@
             const drum = document.getElementById('drum');
             drum.innerHTML = '';
             
-            // Add items to drum (repeat for scrolling effect)
+            // Generate drum items - first 15 are filler, middle is result placeholder
             for (let i = 0; i < 30; i++) {
                 const reward = rewards[Math.floor(Math.random() * rewards.length)];
                 const item = document.createElement('div');
                 item.className = `drum-item ${reward.class}`;
                 item.textContent = `💎 ${reward.amount}`;
+                item.id = `drum-item-${i}`;
                 drum.appendChild(item);
             }
         }
@@ -372,19 +387,52 @@
                 const result = calculateResult();
                 currentResult = result;
                 
-                // Calculate position of winning item
-                const itemHeight = 50;
-                const winningIndex = 15; // Middle of the drum
-                const totalItems = 30;
-                
-                // Calculate scroll position
-                const baseScroll = (totalItems - winningIndex) * itemHeight;
-                const extraSpins = 5 * totalItems * itemHeight; // 5 full spins
-                const finalPosition = baseScroll + extraSpins + (Math.random() * 50); // Random offset
-                
+                // Regenerate drum with random items for visual effect
                 const drum = document.getElementById('drum');
+                drum.innerHTML = '';
+                
+                // Create items in a pattern: filler at top, then result, then more filler
+                // Position 2-3 in the drum will be our winning zone (center of 200px container with 50px items)
+                const winningIndex = 2; // Index where the result will appear (center of view)
+                
+                // Add filler items before winning position
+                for (let i = 0; i < winningIndex; i++) {
+                    const reward = rewards[Math.floor(Math.random() * rewards.length)];
+                    const item = document.createElement('div');
+                    item.className = `drum-item ${reward.class}`;
+                    item.textContent = `💎 ${reward.amount}`;
+                    drum.appendChild(item);
+                }
+                
+                // Add winning item
+                const winItem = document.createElement('div');
+                winItem.className = `drum-item ${result.class}`;
+                winItem.textContent = `💎 ${result.amount}`;
+                winItem.id = 'winning-item';
+                drum.appendChild(winItem);
+                
+                // Add more filler items
+                for (let i = winningIndex + 1; i < 30; i++) {
+                    const reward = rewards[Math.floor(Math.random() * rewards.length)];
+                    const item = document.createElement('div');
+                    item.className = `drum-item ${reward.class}`;
+                    item.textContent = `💎 ${reward.amount}`;
+                    drum.appendChild(item);
+                }
+                
+                // Calculate scroll position to center the winning item
+                const itemHeight = 50;
+                const containerHeight = 200;
+                const centerOffset = containerHeight / 2 - itemHeight / 2; // 100 - 25 = 75
+                const extraSpins = 5 * 30 * itemHeight; // 5 full spins
+                const randomOffset = Math.floor(Math.random() * 100);
+                
+                // Position to show winning item in center
+                const targetPosition = winningIndex * itemHeight - centerOffset;
+                const finalPosition = targetPosition + extraSpins + randomOffset;
+                
                 drum.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-                drum.style.transform = `translateY(${finalPosition}px)`;
+                drum.style.transform = `translateY(-${finalPosition}px)`;
                 
                 // Wait for animation
                 await new Promise(resolve => setTimeout(resolve, 4000));
@@ -481,7 +529,7 @@
             drum.style.transition = 'none';
             drum.style.transform = 'translateY(0)';
             
-            // Reinitialize drum
+            // Reinitialize drum with new items
             setTimeout(() => {
                 initDrum();
             }, 100);

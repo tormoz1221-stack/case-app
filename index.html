@@ -71,7 +71,7 @@
             border: 2px solid #4a4a6a;
         }
 
-        /* Центральная линия - показывает выигрышную позицию */
+        /* Центральная линия */
         .center-line {
             position: absolute;
             top: 50%;
@@ -107,7 +107,6 @@
         .prize-item.gold { 
             background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); 
             color: #1a1a2e;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.3);
         }
         .prize-item.silver { 
             background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%); 
@@ -121,7 +120,7 @@
             background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
         }
 
-        /* Градиенты по краям для плавного исчезновения */
+        /* Градиенты по краям */
         .drum-container::before,
         .drum-container::after {
             content: '';
@@ -153,11 +152,6 @@
             color: #1a1a2e;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .open-btn:active {
-            transform: scale(0.98);
         }
 
         .open-btn:disabled {
@@ -165,7 +159,6 @@
             color: #888;
             cursor: not-allowed;
             box-shadow: none;
-            transform: none;
         }
 
         /* Результат */
@@ -183,12 +176,6 @@
 
         .result-box.show {
             display: block;
-            animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes resultPop {
-            0% { opacity: 0; transform: scale(0.5); }
-            100% { opacity: 1; transform: scale(1); }
         }
 
         .result-title {
@@ -232,11 +219,6 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
         }
 
         .btn-save {
@@ -257,7 +239,6 @@
             max-width: 300px;
         }
 
-        /* Эффект свечения при выигрыше */
         .glow {
             animation: glow 0.5s ease-in-out;
         }
@@ -305,7 +286,29 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Призы и их шансы (в процентах * 100 для точности)
+        // Переменная для хранения данных для отправки
+        let pendingData = null;
+
+        // Настраиваем главную кнопку
+        tg.MainButton.setText('Закрыть');
+        tg.MainButton.onClick(() => {
+            if (pendingData) {
+                tg.sendData(pendingData);
+            }
+            tg.close();
+        });
+        tg.MainButton.show();
+
+        // Также показываем кнопку "Назад" в заголовке
+        tg.BackButton.onClick(() => {
+            if (pendingData) {
+                tg.sendData(pendingData);
+            }
+            tg.close();
+        });
+        tg.BackButton.show();
+
+        // Призы и их шансы
         const rewards = [
             { amount: 10, chance: 6000, class: 'common' },
             { amount: 50, chance: 3000, class: 'bronze' },
@@ -322,10 +325,9 @@
             2500: 1299, 5000: 1999, 10000: 3999
         };
 
-        let currentResult = null;
         let isSpinning = false;
 
-        // Инициализация - показать все призы в барабане
+        // Инициализация
         function init() {
             const drum = document.getElementById('drum');
             drum.innerHTML = '';
@@ -336,11 +338,13 @@
                 const el = document.createElement('div');
                 el.className = `prize-item ${r.class}`;
                 el.textContent = `💰 ${r.amount}`;
+                el.dataset.amount = r.amount;
+                el.dataset.class = r.class;
                 drum.appendChild(el);
             }
         }
 
-        // Вычисление результата на основе шансов
+        // Вычисление результата
         function calculateResult() {
             const total = rewards.reduce((sum, r) => sum + r.chance, 0);
             const roll = Math.random() * total;
@@ -366,68 +370,77 @@
             openBtn.disabled = true;
             resultBox.classList.remove('show');
             
-            // Вычисляем результат
+            // ВЫЧИСЛЯЕМ РЕЗУЛЬТАТ ПЕРЕД АНИМАЦИЕЙ
             const result = calculateResult();
-            currentResult = result;
+            const winAmount = result.amount;
+            const winClass = result.class;
+            const winPrice = sellPrices[result.amount];
             
-            // Создаём ленту призов для анимации
+            // Очищаем и создаём новую ленту
             drum.innerHTML = '';
+            drum.style.transition = 'none';
+            drum.style.transform = 'translateY(0)';
             
-            // 8 полных оборотов + позиция выигрыша
-            const itemsPerSpin = rewards.length;
-            const fullSpins = 8;
-            const winIndex = Math.floor(Math.random() * rewards.length) + fullSpins * itemsPerSpin;
+            // Создаём ленту: 70 случайных призов + выигрышный + 5 после
+            const prizeHeight = 100;
+            const totalItems = 76; // 70 + 1 + 5
+            const winPosition = 70; // Позиция выигрышного приза
             
-            // Создаём призы для анимации
-            let currentIndex = 0;
-            for (let i = 0; i < winIndex; i++) {
-                const r = rewards[Math.floor(Math.random() * rewards.length)];
+            for (let i = 0; i < totalItems; i++) {
+                let r;
+                if (i === winPosition) {
+                    // Это выигрышный приз
+                    r = { amount: winAmount, class: winClass };
+                } else {
+                    // Случайный приз
+                    r = rewards[Math.floor(Math.random() * rewards.length)];
+                }
+                
                 const el = document.createElement('div');
                 el.className = `prize-item ${r.class}`;
                 el.textContent = `💰 ${r.amount}`;
-                drum.appendChild(el);
-                currentIndex++;
-            }
-            
-            // Добавляем выигрышный приз
-            const winEl = document.createElement('div');
-            winEl.className = `prize-item ${result.class}`;
-            winEl.textContent = `💰 ${result.amount}`;
-            drum.appendChild(winEl);
-            
-            // Добавляем ещё пару призов после выигрыша
-            for (let i = 0; i < 3; i++) {
-                const r = rewards[Math.floor(Math.random() * rewards.length)];
-                const el = document.createElement('div');
-                el.className = `prize-item ${r.class}`;
-                el.textContent = `💰 ${r.amount}`;
+                el.dataset.amount = r.amount;
                 drum.appendChild(el);
             }
             
-            // Вычисляем позицию для анимации
-            const prizeHeight = 100; // высота каждого приза
+            // Вычисляем позицию для центрирования выигрыша
+            // Выигрыш на позиции winPosition, нужно чтобы он был по центру (50px)
             const containerHeight = 100;
+            const targetY = winPosition * prizeHeight - containerHeight / 2 + prizeHeight / 2;
             
-            // Центрируем выигрышный приз (он последний перед добавкой)
-            const targetPosition = (currentIndex - 1) * prizeHeight - containerHeight / 2 + prizeHeight / 2;
-            
-            // Добавляем случайное смещение для реалистичности
-            const randomOffset = Math.floor(Math.random() * 30) - 15;
-            const finalPosition = targetPosition + randomOffset;
+            // Небольшое случайное смещение (±20px)
+            const randomOffset = Math.floor(Math.random() * 40) - 20;
+            const finalY = targetY + randomOffset;
             
             // Запускаем анимацию
-            drum.style.transition = 'transform 5s cubic-bezier(0.1, 0.9, 0.2, 1)';
-            drum.style.transform = `translateY(-${finalPosition}px)`;
+            await new Promise(r => setTimeout(r, 50));
+            drum.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            drum.style.transform = `translateY(-${finalY}px)`;
             
             // Ждём окончания анимации
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(r => setTimeout(r, 4000));
+            
+            // ЧИТАЕМ РЕЗУЛЬТАТ ИЗ DOM - призы прокрутились, центральный сейчас - выигрышный
+            // Центральная линия на 50px, нужно найти какой приз там
+            // Призы идут с шагом 100px, первый был сдвинут на -finalY
+            // Центральный элемент = Math.round(finalY / prizeHeight)
+            const centerIndex = Math.round(finalY / prizeHeight);
+            const prizeElements = drum.querySelectorAll('.prize-item');
+            let finalAmount = winAmount;
+            
+            if (prizeElements[centerIndex] && prizeElements[centerIndex].dataset.amount) {
+                finalAmount = parseInt(prizeElements[centerIndex].dataset.amount);
+            }
             
             // Показываем результат
-            document.getElementById('resultAmount').textContent = result.amount.toLocaleString();
-            document.getElementById('resultPrice').textContent = `+${sellPrices[result.amount]}₽ при продаже`;
+            document.getElementById('resultAmount').textContent = finalAmount.toLocaleString();
+            document.getElementById('resultPrice').textContent = `+${sellPrices[finalAmount]}₽ при продаже`;
             resultBox.classList.add('show');
             
-            // Добавляем эффект свечения
+            // Сохраняем для кнопок
+            window.currentWinAmount = finalAmount;
+            
+            // Эффект свечения
             document.querySelector('.drum-container').classList.add('glow');
             setTimeout(() => {
                 document.querySelector('.drum-container').classList.remove('glow');
@@ -437,24 +450,27 @@
         }
 
         function saveToInventory() {
-            if (!currentResult) return;
-            tg.showAlert('Голда добавлена в инвентарь!');
-            tg.sendData(JSON.stringify({
+            const amount = window.currentWinAmount || 50;
+            pendingData = JSON.stringify({
                 action: 'save_gold',
-                amount: currentResult.amount
-            }));
+                amount: amount
+            });
+            tg.showAlert('Голда добавлена в инвентарь!');
+            // Отправляем данные и закрываем
+            tg.sendData(pendingData);
             setTimeout(() => tg.close(), 500);
         }
 
         function sellGold() {
-            if (!currentResult) return;
-            const price = sellPrices[currentResult.amount];
-            tg.showAlert(`Голда продана за ${price}₽!`);
-            tg.sendData(JSON.stringify({
+            const amount = window.currentWinAmount || 50;
+            const price = sellPrices[amount];
+            pendingData = JSON.stringify({
                 action: 'sell_gold',
-                amount: currentResult.amount,
+                amount: amount,
                 price: price
-            }));
+            });
+            tg.showAlert(`Голда продана за ${price}₽!`);
+            tg.sendData(pendingData);
             setTimeout(() => tg.close(), 500);
         }
 

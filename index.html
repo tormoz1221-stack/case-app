@@ -76,7 +76,7 @@
         .drum-container {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 120px;
             background: #0a0a1a;
             border-radius: 15px;
             overflow: hidden;
@@ -86,8 +86,7 @@
         .drum {
             position: absolute;
             width: 100%;
-            /* Start above the visible area - first item should be above container */
-            top: -50px;
+            top: -60px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -95,16 +94,16 @@
 
         .drum-item {
             width: 100%;
-            height: 50px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
             color: white;
             border-bottom: 1px solid #2a2a4a;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            flex-shrink: 0; /* Prevent items from shrinking */
+            flex-shrink: 0;
         }
 
         .drum-item.gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #1a1a2e; }
@@ -117,9 +116,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
+            width: 90%;
             height: 60px;
-            background: rgba(255, 215, 0, 0.2);
+            background: rgba(255, 215, 0, 0.15);
             border: 3px solid #ffd700;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
@@ -127,14 +126,13 @@
             pointer-events: none;
         }
 
-        /* Show items above and below the container with fade effect */
         .drum-container::before,
         .drum-container::after {
             content: '';
             position: absolute;
             left: 0;
             right: 0;
-            height: 40px;
+            height: 30px;
             z-index: 5;
             pointer-events: none;
         }
@@ -194,7 +192,7 @@
         }
 
         .result-amount {
-            font-size: 36px;
+            font-size: 48px;
             font-weight: bold;
             background: linear-gradient(90deg, #ffd700, #ffaa00);
             -webkit-background-clip: text;
@@ -230,6 +228,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            min-width: 140px;
         }
 
         .btn-save {
@@ -240,11 +239,6 @@
         .btn-sell {
             background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
             color: white;
-        }
-
-        .btn-spin-again {
-            background: linear-gradient(180deg, #ffd700 0%, #ffaa00 100%);
-            color: #1a1a2e;
         }
 
         .btn:hover {
@@ -293,7 +287,6 @@
         <div class="drum-container">
             <div class="highlight-window"></div>
             <div class="drum" id="drum">
-                <!-- Items will be inserted here -->
             </div>
         </div>
     </div>
@@ -319,12 +312,6 @@
             </button>
             <button class="btn btn-sell" onclick="sellGold()">
                 💵 Продать
-            </button>
-        </div>
-        
-        <div style="margin-top: 15px;">
-            <button class="btn btn-spin-again" onclick="spinAgain()">
-                🎁 Открыть ещё
             </button>
         </div>
     </div>
@@ -366,13 +353,13 @@
         let currentResult = null;
         let isSpinning = false;
 
-        // Initialize drum
+        // Initialize drum with items
         function initDrum() {
             const drum = document.getElementById('drum');
             drum.innerHTML = '';
             
-            // Generate drum items - first 15 are filler, middle is result placeholder
-            for (let i = 0; i < 30; i++) {
+            // Generate drum items - 20 items total
+            for (let i = 0; i < 20; i++) {
                 const reward = rewards[Math.floor(Math.random() * rewards.length)];
                 const item = document.createElement('div');
                 item.className = `drum-item ${reward.class}`;
@@ -399,13 +386,17 @@
                 // Get drum element
                 const drum = document.getElementById('drum');
                 
-                // Clear and create new items
+                // Clear and prepare
                 drum.innerHTML = '';
                 drum.style.transition = 'none';
                 drum.style.transform = 'translateY(0)';
                 
-                // Add items: winner should be at index 3 (center of visible area: 200/50 = 4th item)
-                const winningIndex = 3;
+                // Winning index should be in the middle (index 10 for 20 items)
+                // But we want it centered in the 120px container (60px items)
+                // Container center is at 60px, winner at index 10 = 600px from top
+                // So we need to offset by 600 - 60 = 540px
+                const winningIndex = 10;
+                const itemHeight = 60;
                 
                 // Add items before winning position (filler)
                 for (let i = 0; i < winningIndex; i++) {
@@ -424,7 +415,7 @@
                 drum.appendChild(winItem);
                 
                 // Add items after winning position (filler)
-                for (let i = winningIndex + 1; i < 30; i++) {
+                for (let i = winningIndex + 1; i < 20; i++) {
                     const reward = rewards[Math.floor(Math.random() * rewards.length)];
                     const item = document.createElement('div');
                     item.className = `drum-item ${reward.class}`;
@@ -435,14 +426,18 @@
                 // Wait for DOM to update
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
-                // Calculate scroll position
-                // Container is 200px, each item is 50px. Winner is at index 3 (4th item).
-                // To center winner: 3 * 50 = 150px from top, minus half container (100) = 50px offset
-                // Plus extra spins for visual effect
-                const itemHeight = 50;
-                const extraSpins = 5 * 30 * itemHeight; // 5 full spins
-                const randomOffset = Math.floor(Math.random() * 100);
-                const targetPosition = winningIndex * itemHeight - 50; // Center in 200px container
+                // Calculate scroll position to center winner
+                // Winner is at index 10, each item is 60px
+                // Position from top = 10 * 60 = 600px
+                // Container center = 60px
+                // To center winner: we need to scroll to (600 - 60) = 540px from top of drum
+                // But drum starts at -60px, so we need to offset by that too
+                // Final position = winningIndex * itemHeight - containerHeight/2 + drumStartOffset
+                // = 10 * 60 - 60 + 60 = 600px
+                const containerHeight = 120;
+                const extraSpins = 5 * 20 * itemHeight; // 5 full spins
+                const randomOffset = Math.floor(Math.random() * 50);
+                const targetPosition = winningIndex * itemHeight - containerHeight / 2 + 60;
                 const finalPosition = targetPosition + extraSpins + randomOffset;
                 
                 // Apply animation
@@ -468,7 +463,7 @@
 
         // Calculate result based on chances
         function calculateResult() {
-            const roll = Math.random() * 10000; // 0 to 10000
+            const roll = Math.random() * 10000;
             let cumulative = 0;
             
             // Sort by chance ascending for correct calculation
@@ -499,18 +494,12 @@
         function saveToInventory() {
             if (!currentResult) return;
             
-            tg.showConfirm(
-                `Отложить ${currentResult.amount} голды в инвентарь?`,
-                (confirmed) => {
-                    if (confirmed) {
-                        tg.sendData(JSON.stringify({
-                            action: 'save_gold',
-                            amount: currentResult.amount
-                        }));
-                        tg.close();
-                    }
-                }
-            );
+            // Send data directly without confirmation
+            tg.sendData(JSON.stringify({
+                action: 'save_gold',
+                amount: currentResult.amount
+            }));
+            tg.close();
         }
 
         // Sell gold
@@ -519,38 +508,15 @@
             
             const price = sellPrices[currentResult.amount] || 0;
             
-            tg.showConfirm(
-                `Продать ${currentResult.amount} голды за ${price}₽?`,
-                (confirmed) => {
-                    if (confirmed) {
-                        tg.sendData(JSON.stringify({
-                            action: 'sell_gold',
-                            amount: currentResult.amount,
-                            price: price
-                        }));
-                        tg.close();
-                    }
-                }
-            );
+            tg.sendData(JSON.stringify({
+                action: 'sell_gold',
+                amount: currentResult.amount,
+                price: price
+            }));
+            tg.close();
         }
 
-        // Spin again
-        function spinAgain() {
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('spinBtn').disabled = false;
-            
-            // Reset drum position
-            const drum = document.getElementById('drum');
-            drum.style.transition = 'none';
-            drum.style.transform = 'translateY(0)';
-            
-            // Reinitialize drum with new items
-            setTimeout(() => {
-                initDrum();
-            }, 100);
-        }
-
-        // Initialize
+        // Initialize on page load
         initDrum();
     </script>
 </body>

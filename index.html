@@ -79,32 +79,18 @@
             height: 200px;
             background: #0a0a1a;
             border-radius: 15px;
-            overflow: hidden; /* Hide overflow - items outside container */
+            overflow: hidden;
             border: 3px solid #4a4a6a;
-            /* Add mask to show items smoothly scrolling through center */
-            -webkit-mask-image: linear-gradient(to bottom, 
-                transparent 0%, 
-                black 20%, 
-                black 80%, 
-                transparent 100%);
-            mask-image: linear-gradient(to bottom, 
-                transparent 0%, 
-                black 20%, 
-                black 80%, 
-                transparent 100%);
         }
 
         .drum {
             position: absolute;
             width: 100%;
-            /* Height of all items combined: 30 items * 50px = 1500px */
-            height: 1500px;
+            /* Start above the visible area - first item should be above container */
+            top: -50px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Start with drum positioned so first items are hidden */
-            transform: translateY(0);
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
         }
 
         .drum-item {
@@ -118,6 +104,7 @@
             color: white;
             border-bottom: 1px solid #2a2a4a;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0; /* Prevent items from shrinking */
         }
 
         .drum-item.gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #1a1a2e; }
@@ -138,6 +125,28 @@
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
             z-index: 10;
             pointer-events: none;
+        }
+
+        /* Show items above and below the container with fade effect */
+        .drum-container::before,
+        .drum-container::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 40px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .drum-container::before {
+            top: 0;
+            background: linear-gradient(to bottom, #1a1a2e 0%, transparent 100%);
+        }
+
+        .drum-container::after {
+            bottom: 0;
+            background: linear-gradient(to top, #1a1a2e 0%, transparent 100%);
         }
 
         .spin-button {
@@ -387,15 +396,18 @@
                 const result = calculateResult();
                 currentResult = result;
                 
-                // Regenerate drum with random items for visual effect
+                // Get drum element
                 const drum = document.getElementById('drum');
+                
+                // Clear and create new items
                 drum.innerHTML = '';
+                drum.style.transition = 'none';
+                drum.style.transform = 'translateY(0)';
                 
-                // Create items in a pattern: filler at top, then result, then more filler
-                // Position 2-3 in the drum will be our winning zone (center of 200px container with 50px items)
-                const winningIndex = 2; // Index where the result will appear (center of view)
+                // Add items: winner should be at index 3 (center of visible area: 200/50 = 4th item)
+                const winningIndex = 3;
                 
-                // Add filler items before winning position
+                // Add items before winning position (filler)
                 for (let i = 0; i < winningIndex; i++) {
                     const reward = rewards[Math.floor(Math.random() * rewards.length)];
                     const item = document.createElement('div');
@@ -411,7 +423,7 @@
                 winItem.id = 'winning-item';
                 drum.appendChild(winItem);
                 
-                // Add more filler items
+                // Add items after winning position (filler)
                 for (let i = winningIndex + 1; i < 30; i++) {
                     const reward = rewards[Math.floor(Math.random() * rewards.length)];
                     const item = document.createElement('div');
@@ -420,22 +432,25 @@
                     drum.appendChild(item);
                 }
                 
-                // Calculate scroll position to center the winning item
+                // Wait for DOM to update
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                // Calculate scroll position
+                // Container is 200px, each item is 50px. Winner is at index 3 (4th item).
+                // To center winner: 3 * 50 = 150px from top, minus half container (100) = 50px offset
+                // Plus extra spins for visual effect
                 const itemHeight = 50;
-                const containerHeight = 200;
-                const centerOffset = containerHeight / 2 - itemHeight / 2; // 100 - 25 = 75
                 const extraSpins = 5 * 30 * itemHeight; // 5 full spins
                 const randomOffset = Math.floor(Math.random() * 100);
-                
-                // Position to show winning item in center
-                const targetPosition = winningIndex * itemHeight - centerOffset;
+                const targetPosition = winningIndex * itemHeight - 50; // Center in 200px container
                 const finalPosition = targetPosition + extraSpins + randomOffset;
                 
-                drum.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+                // Apply animation
+                drum.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
                 drum.style.transform = `translateY(-${finalPosition}px)`;
                 
-                // Wait for animation
-                await new Promise(resolve => setTimeout(resolve, 4000));
+                // Wait for animation to complete
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
                 // Show result
                 document.getElementById('loading').style.display = 'none';

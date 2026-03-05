@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Открытие кейса</title>
+    <title>Кейс с голдой</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -21,214 +21,188 @@
             align-items: center;
             padding: 20px;
             color: white;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 22px;
             background: linear-gradient(90deg, #ffd700, #ffaa00);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .header p {
-            font-size: 14px;
-            color: #aaa;
-        }
-
-        .case-display {
+        .case-box {
             background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
-            border-radius: 20px;
-            padding: 20px;
+            border-radius: 15px;
+            padding: 15px;
             width: 100%;
-            max-width: 350px;
-            margin-bottom: 20px;
+            max-width: 300px;
             border: 2px solid #3a3a5a;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .case-icon {
-            font-size: 60px;
-            text-align: center;
-            margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .case-name {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
             margin-bottom: 15px;
         }
 
-        .drum-container {
-            position: relative;
-            width: 100%;
-            height: 120px;
-            background: #0a0a1a;
-            border-radius: 15px;
-            overflow: hidden;
-            border: 3px solid #4a4a6a;
+        .case-icon {
+            font-size: 50px;
+            text-align: center;
+            margin-bottom: 5px;
         }
 
-        .drum {
-            position: absolute;
+        .case-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Барабан - видимая область */
+        .drum-wrapper {
+            position: relative;
             width: 100%;
-            top: -60px;
+            height: 80px;
+            background: #0d0d1a;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #4a4a6a;
+        }
+
+        /* Окно центровки - показывает какой приз в центре */
+        .center-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #ffd700;
+            transform: translateY(-50%);
+            z-index: 10;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        /* Лента с призами */
+        .drum-strip {
+            position: absolute;
+            left: 0;
+            right: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .drum-item {
+        .prize {
             width: 100%;
-            height: 60px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             color: white;
             border-bottom: 1px solid #2a2a4a;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            flex-shrink: 0;
         }
 
-        .drum-item.gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #1a1a2e; }
-        .drum-item.silver { background: linear-gradient(90deg, #c0c0c0, #a0a0a0); color: #1a1a2e; }
-        .drum-item.bronze { background: linear-gradient(90deg, #cd7f32, #b87333); color: #1a1a2e; }
-        .drum-item.common { background: linear-gradient(90deg, #4a4a6a, #3a3a5a); }
+        .prize.gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #1a1a2e; }
+        .prize.silver { background: linear-gradient(90deg, #c0c0c0, #a0a0a0); color: #1a1a2e; }
+        .prize.bronze { background: linear-gradient(90deg, #cd7f32, #b87333); color: #1a1a2e; }
+        .prize.common { background: linear-gradient(90deg, #4a4a6a, #3a3a5a); }
 
-        .highlight-window {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            height: 60px;
-            background: rgba(255, 215, 0, 0.15);
-            border: 3px solid #ffd700;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .drum-container::before,
-        .drum-container::after {
+        /* Градиенты сверху и снизу для плавного исчезновения */
+        .drum-wrapper::before,
+        .drum-wrapper::after {
             content: '';
             position: absolute;
             left: 0;
             right: 0;
-            height: 30px;
+            height: 20px;
             z-index: 5;
             pointer-events: none;
         }
 
-        .drum-container::before {
+        .drum-wrapper::before {
             top: 0;
             background: linear-gradient(to bottom, #1a1a2e 0%, transparent 100%);
         }
 
-        .drum-container::after {
+        .drum-wrapper::after {
             bottom: 0;
             background: linear-gradient(to top, #1a1a2e 0%, transparent 100%);
         }
 
-        .spin-button {
+        .open-btn {
             background: linear-gradient(180deg, #ffd700 0%, #ffaa00 100%);
             border: none;
-            border-radius: 15px;
-            padding: 18px 50px;
-            font-size: 20px;
+            border-radius: 12px;
+            padding: 15px 40px;
+            font-size: 18px;
             font-weight: bold;
             color: #1a1a2e;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
         }
 
-        .spin-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
-        }
-
-        .spin-button:disabled {
+        .open-btn:disabled {
             background: #4a4a6a;
             color: #888;
             cursor: not-allowed;
             box-shadow: none;
         }
 
-        .result {
+        /* Результат */
+        .result-box {
             display: none;
             text-align: center;
-            margin-top: 20px;
-            animation: fadeIn 0.5s ease-out;
+            margin-top: 15px;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result-item {
-            font-size: 48px;
-            margin-bottom: 10px;
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .result-amount {
-            font-size: 48px;
+            font-size: 36px;
             font-weight: bold;
             background: linear-gradient(90deg, #ffd700, #ffaa00);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 10px;
         }
 
         .result-label {
-            font-size: 18px;
+            font-size: 14px;
             color: #aaa;
-            margin-bottom: 20px;
+            margin: 5px 0 15px;
         }
 
         .result-price {
-            font-size: 24px;
+            font-size: 20px;
             color: #4ade80;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        .result-buttons {
+        .btn-row {
             display: flex;
             gap: 10px;
             justify-content: center;
-            flex-wrap: wrap;
         }
 
-        .btn {
-            padding: 15px 25px;
+        .action-btn {
+            padding: 12px 20px;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
-            min-width: 140px;
         }
 
         .btn-save {
@@ -241,91 +215,50 @@
             color: white;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #3a3a5a;
-            border-top: 4px solid #ffd700;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .chance-info {
-            margin-top: 20px;
+        .chance-text {
+            margin-top: 15px;
             text-align: center;
             color: #666;
-            font-size: 12px;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🎁 Кейс с голдой</h1>
-        <p>Откройте кейс и выиграйте голду!</p>
+        <h1>💰 Кейс с голдой</h1>
     </div>
 
-    <div class="case-display">
-        <div class="case-icon">💰</div>
-        <div class="case-name">Кейс с голдой</div>
+    <div class="case-box">
+        <div class="case-icon">🎁</div>
+        <div class="case-title">Кейс с голдой</div>
         
-        <div class="drum-container">
-            <div class="highlight-window"></div>
-            <div class="drum" id="drum">
-            </div>
+        <div class="drum-wrapper">
+            <div class="center-line"></div>
+            <div class="drum-strip" id="drumStrip"></div>
         </div>
     </div>
 
-    <button class="spin-button" id="spinBtn" onclick="spin()">
-        🎰 Открыть кейс
-    </button>
+    <button class="open-btn" id="openBtn" onclick="spin()">🎰 Открыть</button>
 
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p style="margin-top: 10px;">Загрузка результата...</p>
-    </div>
-
-    <div class="result" id="result">
-        <div class="result-item">💎</div>
+    <div class="result-box" id="resultBox">
         <div class="result-amount" id="resultAmount">0</div>
         <div class="result-label">голды выиграно!</div>
         <div class="result-price" id="resultPrice">+0₽</div>
         
-        <div class="result-buttons">
-            <button class="btn btn-save" onclick="saveToInventory()">
-                📦 Отложить
-            </button>
-            <button class="btn btn-sell" onclick="sellGold()">
-                💵 Продать
-            </button>
+        <div class="btn-row">
+            <button class="action-btn btn-save" onclick="saveToInventory()">📦 Отложить</button>
+            <button class="action-btn btn-sell" onclick="sellGold()">💵 Продать</button>
         </div>
     </div>
 
-    <div class="chance-info">
-        Шанс выигрыша: 10 голды - 60%, 50 - 50%, 100 - 5%, 500 - 2%, 1000 - 1%, 1500 - 0.5%, 2500 - 0.3%, 5000 - 0.2%, 10000 - 0.1%
+    <div class="chance-text">
+        Шансы: 10 - 60%, 50 - 50%, 100 - 5%, 500 - 2%, 1000 - 1%, 1500 - 0.5%, 2500 - 0.3%, 5000 - 0.2%, 10000 - 0.1%
     </div>
 
     <script>
-        // Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Configuration
         const rewards = [
             { amount: 10, chance: 60, class: 'common' },
             { amount: 50, chance: 50, class: 'bronze' },
@@ -339,185 +272,133 @@
         ];
 
         const sellPrices = {
-            10: 49,
-            50: 89,
-            100: 199,
-            500: 399,
-            1000: 699,
-            1500: 899,
-            2500: 1299,
-            5000: 1999,
-            10000: 3999
+            10: 49, 50: 89, 100: 199, 500: 399, 1000: 699,
+            1500: 899, 2500: 1299, 5000: 1999, 10000: 3999
         };
 
         let currentResult = null;
         let isSpinning = false;
 
-        // Initialize drum with items
-        function initDrum() {
-            const drum = document.getElementById('drum');
-            drum.innerHTML = '';
-            
-            // Generate drum items - 20 items total
-            for (let i = 0; i < 20; i++) {
-                const reward = rewards[Math.floor(Math.random() * rewards.length)];
-                const item = document.createElement('div');
-                item.className = `drum-item ${reward.class}`;
-                item.textContent = `💎 ${reward.amount}`;
-                item.id = `drum-item-${i}`;
-                drum.appendChild(item);
+        // Инициализация - показать все призы
+        function init() {
+            const strip = document.getElementById('drumStrip');
+            strip.innerHTML = '';
+            for (let i = 0; i < 15; i++) {
+                const r = rewards[Math.floor(Math.random() * rewards.length)];
+                const el = document.createElement('div');
+                el.className = `prize ${r.class}`;
+                el.textContent = `💎 ${r.amount}`;
+                strip.appendChild(el);
             }
         }
 
-        // Spin the drum
+        function calculateResult() {
+            const roll = Math.random() * 10000;
+            let cumulative = 0;
+            const sorted = [...rewards].sort((a, b) => a.chance - b.chance);
+            for (const r of sorted) {
+                cumulative += r.chance * 100;
+                if (roll <= cumulative) return r;
+            }
+            return rewards[0];
+        }
+
         async function spin() {
             if (isSpinning) return;
             isSpinning = true;
             
-            document.getElementById('spinBtn').disabled = true;
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('loading').style.display = 'block';
+            document.getElementById('openBtn').disabled = true;
+            document.getElementById('resultBox').classList.remove('show');
             
-            try {
-                // Calculate result based on chances
-                const result = calculateResult();
-                currentResult = result;
-                
-                // Get drum element
-                const drum = document.getElementById('drum');
-                
-                // Clear and prepare
-                drum.innerHTML = '';
-                drum.style.transition = 'none';
-                drum.style.transform = 'translateY(0)';
-                
-                // Winning index should be in the middle (index 10 for 20 items)
-                // But we want it centered in the 120px container (60px items)
-                // Container center is at 60px, winner at index 10 = 600px from top
-                // So we need to offset by 600 - 60 = 540px
-                const winningIndex = 10;
-                const itemHeight = 60;
-                
-                // Add items before winning position (filler)
-                for (let i = 0; i < winningIndex; i++) {
-                    const reward = rewards[Math.floor(Math.random() * rewards.length)];
-                    const item = document.createElement('div');
-                    item.className = `drum-item ${reward.class}`;
-                    item.textContent = `💎 ${reward.amount}`;
-                    drum.appendChild(item);
-                }
-                
-                // Add winning item
-                const winItem = document.createElement('div');
-                winItem.className = `drum-item ${result.class}`;
-                winItem.textContent = `💎 ${result.amount}`;
-                winItem.id = 'winning-item';
-                drum.appendChild(winItem);
-                
-                // Add items after winning position (filler)
-                for (let i = winningIndex + 1; i < 20; i++) {
-                    const reward = rewards[Math.floor(Math.random() * rewards.length)];
-                    const item = document.createElement('div');
-                    item.className = `drum-item ${reward.class}`;
-                    item.textContent = `💎 ${reward.amount}`;
-                    drum.appendChild(item);
-                }
-                
-                // Wait for DOM to update
-                await new Promise(resolve => setTimeout(resolve, 50));
-                
-                // Calculate scroll position to center winner
-                // Winner is at index 10, each item is 60px
-                // Position from top = 10 * 60 = 600px
-                // Container center = 60px
-                // To center winner: we need to scroll to (600 - 60) = 540px from top of drum
-                // But drum starts at -60px, so we need to offset by that too
-                // Final position = winningIndex * itemHeight - containerHeight/2 + drumStartOffset
-                // = 10 * 60 - 60 + 60 = 600px
-                const containerHeight = 120;
-                const extraSpins = 5 * 20 * itemHeight; // 5 full spins
-                const randomOffset = Math.floor(Math.random() * 50);
-                const targetPosition = winningIndex * itemHeight - containerHeight / 2 + 60;
-                const finalPosition = targetPosition + extraSpins + randomOffset;
-                
-                // Apply animation
-                drum.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-                drum.style.transform = `translateY(-${finalPosition}px)`;
-                
-                // Wait for animation to complete
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                
-                // Show result
-                document.getElementById('loading').style.display = 'none';
-                showResult(result);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                tg.showAlert('Произошла ошибка. Попробуйте ещё раз.');
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('spinBtn').disabled = false;
+            const result = calculateResult();
+            currentResult = result;
+            
+            const strip = document.getElementById('drumStrip');
+            strip.innerHTML = '';
+            
+            // Создаем ленту: несколько призов до выигрышного, выигрышный, несколько после
+            const beforeCount = 12; // Сколько призов до выигрышного
+            const afterCount = 15;  // Сколько призов после
+            
+            // Призы до выигрыша
+            for (let i = 0; i < beforeCount; i++) {
+                const r = rewards[Math.floor(Math.random() * rewards.length)];
+                const el = document.createElement('div');
+                el.className = `prize ${r.class}`;
+                el.textContent = `💎 ${r.amount}`;
+                strip.appendChild(el);
             }
+            
+            // Выигрышный приз
+            const winEl = document.createElement('div');
+            winEl.className = `prize ${result.class}`;
+            winEl.textContent = `💎 ${result.amount}`;
+            strip.appendChild(winEl);
+            
+            // Призы после выигрыша
+            for (let i = 0; i < afterCount; i++) {
+                const r = rewards[Math.floor(Math.random() * rewards.length)];
+                const el = document.createElement('div');
+                el.className = `prize ${r.class}`;
+                el.textContent = `💎 ${r.amount}`;
+                strip.appendChild(el);
+            }
+            
+            // Вычисляем позицию для центрирования
+            // Высота каждого приза = 80px
+            // Выигрышный индекс = beforeCount (он будет в центре 80px контейнера при правильном смещении)
+            const prizeHeight = 80;
+            const containerHeight = 80;
+            const winIndex = beforeCount;
+            
+            // Центрируем: нужно сместить так, чтобы выигрышный был по центру
+            // Позиция выигрышного = winIndex * prizeHeight
+            // Центр контейнера = containerHeight / 2
+            // Смещение = winIndex * prizeHeight - containerHeight / 2
+            const extraSpins = 4 * rewards.length * prizeHeight;
+            const randomOffset = Math.floor(Math.random() * 50);
+            const targetY = winIndex * prizeHeight - containerHeight / 2;
+            const finalY = targetY + extraSpins + randomOffset;
+            
+            // Анимация
+            strip.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            strip.style.transform = `translateY(-${finalY}px)`;
+            
+            // Ждем окончания анимации
+            await new Promise(r => setTimeout(r, 4000));
+            
+            // Показать результат
+            document.getElementById('resultAmount').textContent = result.amount.toLocaleString();
+            document.getElementById('resultPrice').textContent = `+${sellPrices[result.amount]}₽ при продаже`;
+            document.getElementById('resultBox').classList.add('show');
             
             isSpinning = false;
         }
 
-        // Calculate result based on chances
-        function calculateResult() {
-            const roll = Math.random() * 10000;
-            let cumulative = 0;
-            
-            // Sort by chance ascending for correct calculation
-            const sortedRewards = [...rewards].sort((a, b) => a.chance - b.chance);
-            
-            for (const reward of sortedRewards) {
-                cumulative += reward.chance * 100;
-                if (roll <= cumulative) {
-                    return reward;
-                }
-            }
-            
-            // Default to lowest reward if something goes wrong
-            return rewards[0];
-        }
-
-        // Show result
-        function showResult(result) {
-            document.getElementById('resultAmount').textContent = result.amount.toLocaleString();
-            
-            const price = sellPrices[result.amount] || 0;
-            document.getElementById('resultPrice').textContent = `+${price}₽ при продаже`;
-            
-            document.getElementById('result').style.display = 'block';
-        }
-
-        // Save to inventory
         function saveToInventory() {
             if (!currentResult) return;
-            
-            // Send data directly without confirmation
+            // Показываем сообщение и закрываем
+            tg.showAlert('Голда добавлена в инвентарь!');
             tg.sendData(JSON.stringify({
                 action: 'save_gold',
                 amount: currentResult.amount
             }));
-            tg.close();
+            setTimeout(() => tg.close(), 500);
         }
 
-        // Sell gold
         function sellGold() {
             if (!currentResult) return;
-            
-            const price = sellPrices[currentResult.amount] || 0;
-            
+            const price = sellPrices[currentResult.amount];
+            tg.showAlert(`Голда продана за ${price}₽!`);
             tg.sendData(JSON.stringify({
                 action: 'sell_gold',
                 amount: currentResult.amount,
                 price: price
             }));
-            tg.close();
+            setTimeout(() => tg.close(), 500);
         }
 
-        // Initialize on page load
-        initDrum();
+        init();
     </script>
 </body>
 </html>

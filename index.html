@@ -615,6 +615,7 @@
         <button class="nav-btn" onclick="showPage('freecase')">🎁 Бесплатный</button>
         <button class="nav-btn" onclick="showPage('promocodes')">🎫 Промокоды</button>
         <button class="nav-btn" onclick="showPage('inventory')">🎒 Инвентарь</button>
+        <button class="nav-btn" onclick="showPage('admin')">⚙️ Админ</button>
         <button class="nav-btn" onclick="showPage('profile')">👤 Профиль</button>
     </div>
 
@@ -748,6 +749,54 @@
                 Данные загружаются...
             </div>
         </div>
+
+        <div class="page" id="page-admin">
+            <div class="section-title">⚙️ Админ-панель</div>
+            
+            <div class="profile-card">
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">
+                    Внимание! Это демо-версия. Все изменения сохраняются локально.
+                </p>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">🎫 Управление промокодами</div>
+            <div class="profile-card">
+                <input type="text" class="modal-input" id="adminPromoCode" placeholder="Код промокода" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoBonus" placeholder="Бонус пользователю (руб)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoOwnerBonus" placeholder="Бонус владельцу (руб)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoMaxUses" placeholder="Лимит активаций (0 - безлимит)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoOwnerId" placeholder="ID владельца (по умолчанию 0)" style="margin-bottom: 15px;">
+                <button class="open-btn" onclick="adminCreatePromoAPI()">Создать промокод</button>
+                <div id="adminPromoResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">💰 Изменить баланс</div>
+            <div class="profile-card">
+                <input type="number" class="modal-input" id="adminUserId" placeholder="ID пользователя" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminBalanceAmount" placeholder="Сумма (+/-)" style="margin-bottom: 15px;">
+                <button class="open-btn" style="background: #6366f1;" onclick="adminChangeBalanceAPI()">Изменить баланс</button>
+                <div id="adminBalanceResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">🎁 Выдать предмет в инвентарь</div>
+            <div class="profile-card">
+                <input type="number" class="modal-input" id="adminInventoryUserId" placeholder="ID пользователя" style="margin-bottom: 10px;">
+                <select class="modal-input" id="adminItemType" style="margin-bottom: 10px;">
+                    <option value="gold">💰 Голда</option>
+                    <option value="money">💵 Деньги</option>
+                </select>
+                <input type="number" class="modal-input" id="adminItemAmount" placeholder="Количество/Сумма" style="margin-bottom: 15px;">
+                <button class="open-btn" style="background: #8b5cf6;" onclick="adminAddItemAPI()">Выдать предмет</button>
+                <div id="adminInventoryResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">📊 Статистика (демо)</div>
+            <div class="profile-card">
+                <p>Всего пользователей: <span id="statTotalUsers">1</span></p>
+                <p>Активных промокодов: <span id="statActivePromos">4</span></p>
+                <p>Всего активаций: <span id="statTotalActivations">0</span></p>
+            </div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="emailModal">
@@ -790,6 +839,9 @@
     </div>
 
     <script>
+        // Устанавливаем API URL до загрузки Telegram WebApp
+        window.API_URL = 'http://localhost:5000';
+        
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -875,6 +927,227 @@
         let botUserId = 0;
         let username = '';
 
+        // API URL для бота (настройте под ваш сервер)
+        const API_URL = window.API_URL || 'http://localhost:5000';
+        
+        // Флаг админа
+        let isAdmin = false;
+        
+        // Функция для проверки админ-прав
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch(API_URL + '/api/check_admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    isAdmin = data.is_admin;
+                    console.log('Admin status:', isAdmin);
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                isAdmin = false;
+            }
+        }
+        
+        // Функция для получения баланса с сервера
+        async function fetchBalance() {
+            try {
+                const response = await fetch(API_URL + '/api/get_balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    currentBalance = data.balance;
+                    updateBalanceDisplay();
+                }
+            } catch (e) {
+                console.log('API not available, using local balance');
+            }
+        }
+        
+        // Функция для создания промокода через API
+        async function adminCreatePromoAPI() {
+            const code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
+            const userBonus = parseInt(document.getElementById('adminPromoBonus').value) || 0;
+            const ownerBonus = parseInt(document.getElementById('adminPromoOwnerBonus').value) || 0;
+            const maxUses = parseInt(document.getElementById('adminPromoMaxUses').value) || 0;
+            const ownerId = parseInt(document.getElementById('adminPromoOwnerId').value) || 0;
+            const resultDiv = document.getElementById('adminPromoResult');
+            
+            try {
+                const response = await fetch(API_URL + '/api/create_promo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: telegramUserId,
+                        code: code,
+                        user_bonus: userBonus,
+                        owner_bonus: ownerBonus,
+                        max_uses: maxUses,
+                        owner_id: ownerId
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                    // Также сохраняем локально
+                    adminPromoCodes[code] = {
+                        bonus: userBonus,
+                        ownerBonus: ownerBonus,
+                        maxUses: maxUses,
+                        used: 0,
+                        ownerId: ownerId
+                    };
+                    localStorage.setItem('adminPromoCodes', JSON.stringify(adminPromoCodes));
+                    Object.assign(validPromoCodes, adminPromoCodes);
+                    updateAdminStats();
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                // Используем локальную версию
+                console.log('API not available, using local mode');
+                adminCreatePromo();
+            }
+            
+            // Очищаем поля
+            document.getElementById('adminPromoCode').value = '';
+            document.getElementById('adminPromoBonus').value = '';
+            document.getElementById('adminPromoOwnerBonus').value = '';
+            document.getElementById('adminPromoMaxUses').value = '';
+            document.getElementById('adminPromoOwnerId').value = '';
+        }
+        
+        // Функция для изменения баланса через API
+        async function adminChangeBalanceAPI() {
+            const userId = parseInt(document.getElementById('adminUserId').value);
+            const amount = parseInt(document.getElementById('adminBalanceAmount').value) || 0;
+            const resultDiv = document.getElementById('adminBalanceResult');
+            
+            if (!userId || amount === 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL + '/api/change_balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        admin_id: telegramUserId,
+                        target_user_id: userId,
+                        amount: amount
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                    // Также сохраняем локально
+                    const currentBalance = adminUserBalances[userId] || 0;
+                    adminUserBalances[userId] = currentBalance + amount;
+                    localStorage.setItem('adminUserBalances', JSON.stringify(adminUserBalances));
+                    
+                    // Обновляем баланс если это текущий пользователь
+                    if (userId === botUserId || userId === telegramUserId) {
+                        currentBalance = adminUserBalances[userId];
+                        updateBalanceDisplay();
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                adminChangeBalance();
+            }
+            
+            document.getElementById('adminUserId').value = '';
+            document.getElementById('adminBalanceAmount').value = '';
+            updateAdminStats();
+        }
+        
+        // Функция для добавления предмета через API
+        async function adminAddItemAPI() {
+            const userId = parseInt(document.getElementById('adminInventoryUserId').value);
+            const itemType = document.getElementById('adminItemType').value;
+            const amount = parseInt(document.getElementById('adminItemAmount').value) || 0;
+            const resultDiv = document.getElementById('adminInventoryResult');
+            
+            if (!userId || amount <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL + '/api/add_inventory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        admin_id: telegramUserId,
+                        target_user_id: userId,
+                        item_type: itemType,
+                        amount: amount
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                adminAddItem();
+            }
+            
+            document.getElementById('adminInventoryUserId').value = '';
+            document.getElementById('adminItemAmount').value = '';
+            updateAdminStats();
+        }
+        
+        // Функция для получения статистики
+        async function fetchAdminStats() {
+            try {
+                const response = await fetch(API_URL + '/api/get_stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('statTotalUsers').textContent = data.stats.total_users;
+                    document.getElementById('statActivePromos').textContent = data.stats.active_promos;
+                    document.getElementById('statTotalActivations').textContent = data.stats.total_activations;
+                }
+            } catch (e) {
+                console.log('API not available, using local stats');
+            }
+        }
+        
+        // Скрываем кнопку админа, если пользователь не админ
+        function updateAdminButtonVisibility() {
+            const adminBtn = document.querySelector("button[onclick=\"showPage('admin')\"]");
+            if (adminBtn) {
+                adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+            }
+        }
+        
         function init() {
             // Получаем данные пользователя из Telegram
             try {
@@ -896,6 +1169,18 @@
             } catch (e) {
                 console.log('Telegram data not available:', e);
             }
+            
+            // Проверяем админ-права
+            checkAdminStatus().then(() => {
+                updateAdminButtonVisibility();
+                // Загружаем статистику если админ
+                if (isAdmin) {
+                    fetchAdminStats();
+                }
+            });
+            
+            // Пробуем получить баланс с сервера
+            fetchBalance();
             
             // Обновляем отображение ID
             updateUserIdsDisplay();
@@ -938,6 +1223,12 @@
         }
 
         function showPage(pageId) {
+            // Проверка админ-прав при переходе на страницу админа
+            if (pageId === 'admin' && !isAdmin) {
+                alert('У вас нет доступа к админ-панели!');
+                return;
+            }
+            
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             
@@ -949,7 +1240,8 @@
             else if (pageId === 'freecase') { navBtns[2].classList.add('active'); checkFreeCaseStatus(); }
             else if (pageId === 'promocodes') navBtns[3].classList.add('active');
             else if (pageId === 'inventory') { navBtns[4].classList.add('active'); renderInventory(); }
-            else if (pageId === 'profile') navBtns[5].classList.add('active');
+            else if (pageId === 'admin') navBtns[5].classList.add('active');
+            else if (pageId === 'profile') navBtns[6].classList.add('active');
             
             if (pageId === 'inventory') renderInventory();
         }
@@ -1556,6 +1848,131 @@
             document.getElementById('statGold').textContent = totalGold;
             document.getElementById('statPurchases').textContent = statPurchases;
         }
+        
+        // Админ-функции (демо-версия)
+        let adminPromoCodes = JSON.parse(localStorage.getItem('adminPromoCodes') || '{}');
+        let adminUserBalances = JSON.parse(localStorage.getItem('adminUserBalances') || '{}');
+        
+        function adminCreatePromo() {
+            const code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
+            const userBonus = parseInt(document.getElementById('adminPromoBonus').value) || 0;
+            const ownerBonus = parseInt(document.getElementById('adminPromoOwnerBonus').value) || 0;
+            const maxUses = parseInt(document.getElementById('adminPromoMaxUses').value) || 0;
+            const ownerId = parseInt(document.getElementById('adminPromoOwnerId').value) || 0;
+            const resultDiv = document.getElementById('adminPromoResult');
+            
+            if (!code || userBonus <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            if (adminPromoCodes[code]) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Промокод уже существует!</p>';
+                return;
+            }
+            
+            // Создаём промокод
+            adminPromoCodes[code] = {
+                bonus: userBonus,
+                ownerBonus: ownerBonus,
+                maxUses: maxUses,
+                used: 0,
+                ownerId: ownerId
+            };
+            
+            localStorage.setItem('adminPromoCodes', JSON.stringify(adminPromoCodes));
+            
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Промокод ${code} создан!\nБонус: ${userBonus}₽, Владелец: ${ownerId}, Лимит: ${maxUses || '∞'}</p>`;
+            
+            // Обновляем список промокодов в основном приложении
+            Object.assign(validPromoCodes, adminPromoCodes);
+            
+            // Очищаем поля
+            document.getElementById('adminPromoCode').value = '';
+            document.getElementById('adminPromoBonus').value = '';
+            document.getElementById('adminPromoOwnerBonus').value = '';
+            document.getElementById('adminPromoMaxUses').value = '';
+            document.getElementById('adminPromoOwnerId').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function adminChangeBalance() {
+            const userId = parseInt(document.getElementById('adminUserId').value);
+            const amount = parseInt(document.getElementById('adminBalanceAmount').value) || 0;
+            const resultDiv = document.getElementById('adminBalanceResult');
+            
+            if (!userId || amount === 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            // Получаем текущий баланс пользователя (или 0 если нет)
+            const currentBalance = adminUserBalances[userId] || 0;
+            adminUserBalances[userId] = currentBalance + amount;
+            
+            localStorage.setItem('adminUserBalances', JSON.stringify(adminUserBalances));
+            
+            const newBalance = adminUserBalances[userId];
+            const sign = amount >= 0 ? '+' : '';
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Баланс пользователя ${userId} изменён!\nТеперь: ${newBalance}₽ (${sign}${amount}₽)</p>`;
+            
+            // Если это текущий пользователь - обновляем баланс
+            if (userId === botUserId || userId === telegramUserId) {
+                currentBalance = newBalance;
+                updateBalanceDisplay();
+            }
+            
+            document.getElementById('adminUserId').value = '';
+            document.getElementById('adminBalanceAmount').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function adminAddItem() {
+            const userId = parseInt(document.getElementById('adminInventoryUserId').value);
+            const itemType = document.getElementById('adminItemType').value;
+            const amount = parseInt(document.getElementById('adminItemAmount').value) || 0;
+            const resultDiv = document.getElementById('adminInventoryResult');
+            
+            if (!userId || amount <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            // Создаём предмет
+            const item = {
+                type: itemType,
+                amount: amount,
+                sellPrice: itemType === 'money' ? amount : (sellPrices[amount] || 0)
+            };
+            
+            // Сохраняем в инвентарь пользователя (используем отдельный ключ)
+            const userInventoryKey = `inventory_${userId}`;
+            const userInventory = JSON.parse(localStorage.getItem(userInventoryKey) || '[]');
+            userInventory.push(item);
+            localStorage.setItem(userInventoryKey, JSON.stringify(userInventory));
+            
+            const itemName = itemType === 'gold' ? `${amount} голды` : `${amount}₽`;
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Предмет выдан!\nПользователь: ${userId}\nПредмет: ${itemName}</p>`;
+            
+            document.getElementById('adminInventoryUserId').value = '';
+            document.getElementById('adminItemAmount').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function updateAdminStats() {
+            const promoCount = Object.keys(adminPromoCodes).length;
+            let totalActivations = 0;
+            Object.values(adminPromoCodes).forEach(p => totalActivations += p.used || 0);
+            
+            document.getElementById('statActivePromos').textContent = promoCount + 4; // +4 базовых
+            document.getElementById('statTotalActivations').textContent = totalActivations;
+        }
+        
+        // Объединяем промокоды
+        Object.assign(validPromoCodes, adminPromoCodes);
 
         init();
     </script>

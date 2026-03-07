@@ -4,7 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Магазин</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Создаём mock объект Telegram WebApp на случай если скрипт не загрузится
+        window.Telegram = window.Telegram || {};
+        window.Telegram.WebApp = window.Telegram.WebApp || {
+            expand: function() {},
+            sendData: function() {},
+            initData: '',
+            initDataUnsafe: {}
+        };
+        
+        // Динамически загружаем Telegram WebApp скрипт
+        var tgScript = document.createElement('script');
+        tgScript.src = 'https://telegram.org/js/telegram-web-app.js';
+        tgScript.onload = function() {
+            console.log('Telegram WebApp script loaded successfully');
+            if (window.Telegram.WebApp) {
+                window.Telegram.WebApp.expand();
+            }
+        };
+        tgScript.onerror = function() {
+            console.log('Failed to load Telegram WebApp script - using offline mode');
+        };
+        document.head.appendChild(tgScript);
+    </script>
     <style>
         * {
             margin: 0;
@@ -980,15 +1003,24 @@
     </div>
 
     <script>
-        // Устанавливаем API URL до загрузки Telegram WebApp
-        // Для продакшена замените 'your-hosting-url.com' на ваш реальный URL
-        // Пример: 'https://my-shop-bot.onrender.com'
-        window.API_URL = window.Telegram?.WebApp
-            ? 'https://bot-shop-3qzt.onrender.com'  // URL бота на Render
-            : 'http://localhost:5000';
+        // Проверка загрузки Telegram WebApp
+        let tg = null;
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.expand();
+                console.log('Telegram WebApp initialized');
+            } else {
+                console.log('Telegram WebApp not available - running in browser mode');
+            }
+        } catch (e) {
+            console.log('Error initializing Telegram WebApp:', e);
+        }
         
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Устанавливаем API URL
+        // Для локальной разработки используйте http://localhost:5000
+        // Для продакшена замените на ваш реальный URL бота
+        window.API_URL = 'http://localhost:5000';
 
         // Данные из бота - с официальными логотипами игр
         const games = [

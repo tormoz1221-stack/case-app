@@ -229,35 +229,81 @@
         .products-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 12px;
+            padding: 5px;
         }
 
         .product-card {
-            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
-            border-radius: 12px;
-            padding: 15px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 20px 15px;
             text-align: center;
-            border: 2px solid #3a3a5a;
+            border: 2px solid #334155;
             cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        .product-card:hover::before {
+            left: 100%;
+        }
+        
+        .product-card:active {
+            transform: translateY(-2px) scale(0.98);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.2);
         }
 
         .product-card.case {
-            border-color: #ffd700;
+            border-color: #fbbf24;
+        }
+        
+        .product-card.case:hover {
+            border-color: #fbbf24;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
+        }
+        
+        .product-card.case:active {
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.2);
         }
 
         .product-icon {
-            font-size: 36px;
-            margin-bottom: 8px;
+            font-size: 42px;
+            margin-bottom: 10px;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
 
         .product-name {
             font-size: 13px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            font-weight: 500;
+            line-height: 1.3;
         }
 
         .product-price {
             color: #4ade80;
             font-weight: bold;
+            font-size: 15px;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
         }
 
         .case-box {
@@ -279,6 +325,77 @@
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 10px;
+        }
+
+        .multi-open-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .multi-open-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            border: 2px solid #8b5cf6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .multi-open-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .multi-open-btn:active {
+            transform: translateY(0);
+        }
+
+        .multi-results {
+            background: linear-gradient(180deg, #1e1e3f 0%, #0f0f25 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 2px solid #4a4a6a;
+        }
+
+        .multi-results-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fbbf24;
+        }
+
+        .multi-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .multi-result-item {
+            background: #2a2a4a;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .multi-result-item .amount {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .multi-result-item .price {
+            color: #4ade80;
+            font-size: 11px;
         }
 
         .drum-container {
@@ -560,18 +677,28 @@
         }
 
         .subcat-btn {
-            background: #2a2a4a;
-            border: 2px solid #3a3a5a;
-            color: white;
+            background: #1e293b;
+            border: 2px solid #334155;
+            color: #94a3b8;
             padding: 10px 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 13px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .subcat-btn:hover {
+            background: #334155;
+            color: #e2e8f0;
+            transform: translateY(-2px);
         }
 
         .subcat-btn.active {
-            border-color: #ffd700;
-            color: #ffd700;
+            border-color: #6366f1;
+            color: #fff;
+            background: #4338ca;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
         .debug-info {
@@ -612,7 +739,6 @@
     <div class="nav">
         <button class="nav-btn active" onclick="showPage('catalog')">🛍️ Каталог</button>
         <button class="nav-btn" onclick="showPage('cases')">🎁 Кейсы</button>
-        <button class="nav-btn" onclick="showPage('freecase')">🎁 Бесплатный</button>
         <button class="nav-btn" onclick="showPage('promocodes')">🎫 Промокоды</button>
         <button class="nav-btn" onclick="showPage('inventory')">🎒 Инвентарь</button>
         <button class="nav-btn" onclick="showPage('admin')">⚙️ Админ</button>
@@ -687,6 +813,12 @@
             </div>
 
             <button class="open-btn" id="openBtn" onclick="spin()">🎰 Открыть за <span id="casePrice">49</span>₽</button>
+            
+            <div class="multi-open-row">
+                <button class="multi-open-btn" onclick="spinMultiple(3)">🎰 x3</button>
+                <button class="multi-open-btn" onclick="spinMultiple(5)">🎰 x5</button>
+                <button class="multi-open-btn" onclick="spinMultiple(10)">🎰 x10</button>
+            </div>
 
             <div class="result-box" id="resultBox">
                 <div class="result-amount" id="resultAmount">0</div>
@@ -701,6 +833,15 @@
 
             <div class="chance-text">
                 Шансы: 10💰 - 60%, 50💰 - 30%, 100💰 - 5%, 500💰 - 2%, 1000💰 - 1.5%, 2500💰 - 0.8%, 5000💰 - 0.5%, 10000💰 - 0.2%
+            </div>
+
+            <div class="multi-results" id="multiResults" style="display: none;">
+                <div class="multi-results-title">📊 Результаты</div>
+                <div class="multi-results-grid" id="multiResultsGrid"></div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="action-btn btn-sell" onclick="sellAllMulti()">💵 Продать всё</button>
+                    <button class="action-btn btn-save" onclick="saveAllMulti()">📦 Всё в инвентарь</button>
+                </div>
             </div>
         </div>
 
@@ -840,7 +981,11 @@
 
     <script>
         // Устанавливаем API URL до загрузки Telegram WebApp
-        window.API_URL = 'http://localhost:5000';
+        // Для продакшена замените 'your-hosting-url.com' на ваш реальный URL
+        // Пример: 'https://my-shop-bot.onrender.com'
+        window.API_URL = window.Telegram?.WebApp
+            ? 'https://bot-shop-3qzt.onrender.com'  // URL бота на Render
+            : 'http://localhost:5000';
         
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -1141,10 +1286,14 @@
         }
         
         // Скрываем кнопку админа, если пользователь не админ
+        // Для демо-режима показываем всем, но функционал работает через API
         function updateAdminButtonVisibility() {
+            // Всегда показываем кнопку админа для демо-режима
+            // Проверка админ-прав делается при выполнении действий
             const adminBtn = document.querySelector("button[onclick=\"showPage('admin')\"]");
             if (adminBtn) {
-                adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+                // Всегда показываем для демо
+                adminBtn.style.display = 'inline-block';
             }
         }
         
@@ -1237,8 +1386,7 @@
             const navBtns = document.querySelectorAll('.nav-btn');
             if (pageId === 'catalog') navBtns[0].classList.add('active');
             else if (pageId === 'cases') navBtns[1].classList.add('active');
-            else if (pageId === 'freecase') { navBtns[2].classList.add('active'); checkFreeCaseStatus(); }
-            else if (pageId === 'promocodes') navBtns[3].classList.add('active');
+            else if (pageId === 'promocodes') navBtns[2].classList.add('active');
             else if (pageId === 'inventory') { navBtns[4].classList.add('active'); renderInventory(); }
             else if (pageId === 'admin') navBtns[5].classList.add('active');
             else if (pageId === 'profile') navBtns[6].classList.add('active');
@@ -1512,6 +1660,7 @@
             // Сначала отображаем фильтры по играм
             const gameFilters = [
                 { id: 'all', name: '🎲 Все' },
+                { id: 'free', name: '🎁 Бесплатные' },
                 { id: 1, name: '⭐ Brawl Stars' },
                 { id: 2, name: '👑 Clash Royale' },
                 { id: 3, name: '🏰 Clash of Clans' },
@@ -1520,24 +1669,53 @@
             
             filterGrid.innerHTML = gameFilters.map(g => `
                 <button class="subcat-btn ${currentCaseFilter === g.id ? 'active' : ''}" 
-                    onclick="filterCases(${g.id})">${g.name}</button>
+                    onclick="filterCases('${g.id}')">${g.name}</button>
             `).join('');
             
             // Фильтруем кейсы по выбранной игре
             let caseProducts = Object.values(products).filter(p => p.isCase);
             
-            if (currentCaseFilter !== 'all') {
+            if (currentCaseFilter === 'free') {
+                // Показываем только бесплатный кейс
+                caseProducts = [];
+            } else if (currentCaseFilter !== 'all') {
+                const filterId = String(currentCaseFilter);
                 caseProducts = caseProducts.filter(p => p.sub_category_id && 
-                    (getGameIdBySubCategory(p.sub_category_id) === currentCaseFilter));
+                    (getGameIdBySubCategory(p.sub_category_id) === filterId));
             }
             
-            grid.innerHTML = caseProducts.map(p => `
-                <div class="product-card case" onclick="openCasePage(${p.id}, ${p.price})">
-                    <div class="product-icon">${p.icon}</div>
-                    <div class="product-name">${p.name}</div>
-                    <div class="product-price">${p.price}₽</div>
-                </div>
-            `).join('');
+            // Добавляем бесплатный кейс в начало списка для "Все"
+            if (currentCaseFilter === 'all') {
+                grid.innerHTML = `
+                    <div class="product-card case" onclick="openFreeCaseDirect()">
+                        <div class="product-icon">🎁</div>
+                        <div class="product-name">Бесплатный кейс</div>
+                        <div class="product-price">БЕСПЛАТНО</div>
+                    </div>
+                ` + caseProducts.map(p => `
+                    <div class="product-card case" onclick="openCasePage(${p.id}, ${p.price})">
+                        <div class="product-icon">${p.icon}</div>
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-price">${p.price}₽</div>
+                    </div>
+                `).join('');
+            } else if (currentCaseFilter === 'free') {
+                grid.innerHTML = `
+                    <div class="product-card case" onclick="openFreeCaseDirect()">
+                        <div class="product-icon">🎁</div>
+                        <div class="product-name">Бесплатный кейс</div>
+                        <div class="product-price">БЕСПЛАТНО</div>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = caseProducts.map(p => `
+                    <div class="product-card case" onclick="openCasePage(${p.id}, ${p.price})">
+                        <div class="product-icon">${p.icon}</div>
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-price">${p.price}₽</div>
+                    </div>
+                `).join('');
+            }
         }
         
         function filterCases(gameId) {
@@ -1545,15 +1723,20 @@
             renderCases();
         }
         
+        function openFreeCaseDirect() {
+            checkFreeCaseStatus();
+            showPage('freecase');
+        }
+        
         function getGameIdBySubCategory(subCategoryId) {
             // Map subcategories to games
             const map = {
-                1: 1, 2: 1, 3: 1,  // Brawl Stars
-                4: 2, 5: 2, 6: 2,  // Clash Royale
-                7: 3, 8: 3, 9: 3,  // Clash of Clans
-                10: 4              // Stand Off 2
+                1: '1', 2: '1', 3: '1',  // Brawl Stars
+                4: '2', 5: '2', 6: '2',  // Clash Royale
+                7: '3', 8: '3', 9: '3',  // Clash of Clans
+                10: '4'              // Stand Off 2
             };
-            return map[subCategoryId] || 1;
+            return map[subCategoryId] || '1';
         }
 
         function openCasePage(caseId, price) {
@@ -1561,6 +1744,7 @@
             document.getElementById('casePrice').textContent = price;
             document.getElementById('caseTitle').textContent = 'Кейс с голдой';
             document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('multiResults').style.display = 'none';
             
             const drum = document.getElementById('drum');
             drum.innerHTML = '';
@@ -1576,6 +1760,7 @@
             }
             
             document.getElementById('openBtn').disabled = false;
+            document.querySelectorAll('.multi-open-btn').forEach(btn => btn.disabled = false);
             showPage('case-open');
         }
 
@@ -1662,6 +1847,105 @@
             renderStats();
         }
 
+        // Переменные для множественного открытия кейсов
+        let multiResults = [];
+
+        async function spinMultiple(count) {
+            if (isSpinning) return;
+            
+            const totalPrice = currentCase.price * count;
+            if (currentBalance < totalPrice) {
+                tg.showAlert('Недостаточно средств для ' + count + ' кейсов!');
+                return;
+            }
+            
+            isSpinning = true;
+            // Отключаем все кнопки
+            document.getElementById('openBtn').disabled = true;
+            document.querySelectorAll('.multi-open-btn').forEach(btn => btn.disabled = true);
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('multiResults').style.display = 'none';
+            
+            currentBalance -= totalPrice;
+            statCasesOpened += count;
+            saveData();
+            updateBalanceDisplay();
+            
+            // Генерируем результаты для всех кейсов
+            multiResults = [];
+            for (let i = 0; i < count; i++) {
+                const result = calculateResult();
+                multiResults.push({
+                    amount: result.amount,
+                    price: sellPrices[result.amount]
+                });
+            }
+            
+            // Показываем результаты
+            showMultiResults();
+            
+            isSpinning = false;
+            renderStats();
+        }
+
+        function showMultiResults() {
+            const grid = document.getElementById('multiResultsGrid');
+            let totalGold = 0;
+            let totalPrice = 0;
+            
+            grid.innerHTML = multiResults.map(r => {
+                totalGold += r.amount;
+                totalPrice += r.price;
+                return `
+                    <div class="multi-result-item">
+                        <div class="amount">💰 ${r.amount.toLocaleString()}</div>
+                        <div class="price">+${r.price}₽</div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('multiResults').style.display = 'block';
+            // Прокрутка к результатам
+            document.getElementById('multiResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function sellAllMulti() {
+            let totalPrice = 0;
+            multiResults.forEach(r => {
+                currentBalance += r.price;
+                totalPrice += r.price;
+            });
+            
+            saveData();
+            updateBalanceDisplay();
+            
+            document.getElementById('multiResults').style.display = 'none';
+            document.getElementById('openBtn').disabled = true;
+            
+            tg.showAlert(`Все предметы проданы за ${totalPrice}₽!`);
+            multiResults = [];
+            renderStats();
+        }
+
+        function saveAllMulti() {
+            multiResults.forEach(r => {
+                inventory.push({
+                    type: 'gold',
+                    amount: r.amount,
+                    sellPrice: r.price
+                });
+            });
+            
+            saveData();
+            renderInventory();
+            
+            document.getElementById('multiResults').style.display = 'none';
+            document.getElementById('openBtn').disabled = true;
+            
+            tg.showAlert(`${multiResults.length} предметов добавлено в инвентарь!`);
+            multiResults = [];
+        }
+
         function saveToInventory() {
             inventory.push({
                 type: 'gold',
@@ -1670,6 +1954,10 @@
             });
             saveData();
             renderInventory();
+            // Скрываем результат после действия
+            document.getElementById('resultBox').classList.remove('show');
+            // Блокируем повторное открытие
+            document.getElementById('openBtn').disabled = true;
             tg.showAlert(`Голда (${currentWinAmount}) добавлена в инвентарь!`);
         }
 
@@ -1677,6 +1965,10 @@
             currentBalance += currentWinPrice;
             saveData();
             updateBalanceDisplay();
+            // Скрываем результат после действия
+            document.getElementById('resultBox').classList.remove('show');
+            // Блокируем повторное открытие
+            document.getElementById('openBtn').disabled = true;
             tg.showAlert(`Голда продана за ${currentWinPrice}₽!`);
             renderStats();
         }
@@ -1832,6 +2124,8 @@
             saveData();
             updateBalanceDisplay();
             document.getElementById('freeResultBox').classList.remove('show');
+            // Блокируем повторное открытие
+            document.getElementById('freeOpenBtn').disabled = true;
             tg.showAlert(`Поздравляем! Вы получили ${freeCaseReward}₽ на баланс!`);
         }
 
